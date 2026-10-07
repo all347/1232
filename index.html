@@ -42,7 +42,9 @@ textarea{width:100%;height:110px;font-size:11px;font-family:Consolas,monospace;b
 
     <div class="note">💻 電腦用：瀏覽器按 Ctrl+Shift+O 打開書籤管理器 → 新增書籤，<br>名稱「WISE任務」，網址欄粘貼剛才複製的代碼即可。</div>
 
-    <textarea id="code" readonly spellcheck="false" style="position:absolute;left:-9999px;top:0"></textarea>
+    <textarea id="code" readonly spellcheck="false" style="display:none"></textarea>
+    <div class="note" id="manualTip" style="display:none;color:#be123c;font-weight:700">
+      自動複製失敗：請長按上方代碼框 → 全選 → 拷貝</div>
   </div>
 
   <div class="card">
@@ -64,21 +66,33 @@ textarea{width:100%;height:110px;font-size:11px;font-family:Consolas,monospace;b
 <script>
 (function () {
   var CODE = document.getElementById('tpl').textContent;
-  document.getElementById('code').value = CODE;
-  document.getElementById('copy').onclick = function () {
-    var st = document.getElementById('copyState');
-    function ok() { st.innerHTML = '<span class="ok">✓ 已複製！去書籤網址欄粘貼即可</span>'; }
-    function fail() {
-      var ta = document.getElementById('code');
+  var ta = document.getElementById('code');
+  var st = document.getElementById('copyState');
+  var tip = document.getElementById('manualTip');
+  ta.value = CODE;
+  function showBox() {
+    ta.style.display = 'block';
+    ta.style.cssText = 'display:block;width:100%;height:130px;font-size:11px;font-family:Consolas,monospace;border-radius:12px;border:1px solid rgba(124,58,237,.25);background:rgba(20,14,40,.92);color:#c4b5fd;padding:10px;margin-top:12px;resize:none';
+    tip.style.display = 'block';
+  }
+  function ok() { st.innerHTML = '<span class="ok">✓ 已複製！去書籤網址欄粘貼即可</span>'; }
+  function manual(msg) {
+    st.innerHTML = '<span style="color:#be123c">' + msg + '</span>';
+    showBox();
+    try { ta.focus(); ta.select(); } catch (e) {}
+  }
+  function tryExec() {
+    showBox();
+    try {
       ta.focus(); ta.select();
-      try {
-        if (document.execCommand('copy')) { ok(); return; }
-      } catch (e) {}
-      st.innerHTML = '<span style="color:#be123c">自動複製失敗，請手動全選下方代碼框複製</span>';
-    }
+      if (document.execCommand('copy')) { ok(); return; }
+    } catch (e) {}
+    manual('自動複製被瀏覽器禁止，請手動複製：');
+  }
+  document.getElementById('copy').onclick = function () {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(CODE).then(ok, fail);
-    } else { fail(); }
+      navigator.clipboard.writeText(CODE).then(ok, tryExec);
+    } else { tryExec(); }
   };
 })();
 </script>
